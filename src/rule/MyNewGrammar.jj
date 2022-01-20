@@ -1,0 +1,534 @@
+/**
+ * JavaCC template file created by SF JavaCC plugin 1.5.28+ wizard for JavaCC 1.5.0+
+ */options{  static = true;}PARSER_BEGIN(MyNewGrammar)package rule;
+import operate.*;
+import java.util.ArrayList;
+import java.util.List;
+
+
+public class MyNewGrammar{  public static void main(String args []) throws ParseException, TokenMgrError   {
+    //把这句话放在while里面时总是报Exception，
+    //You must either use ReInit() or set the JavaCC option STATIC to false during parser generation.
+    //移出来就不报错了，不知道为啥
+	MyNewGrammar parser = new MyNewGrammar(System.in);    while (true) {	  //开始解析
+	  try {
+	  System.out.print(" >>");
+	  MyNewGrammar.start();
+	  }catch(ParseException e) {
+	    // 输出语法错误
+	    System.out.println(e.getMessage());
+	    MyNewGrammar.ReInit(System.in);  //出错时，不会无限循环重复输出错误，会让你可以重新输入指令
+	  }
+    }
+  }}
+PARSER_END(MyNewGrammar)
+SKIP :{  " "| "\r"| "\t"| "\n"
+| "\r\n" }TOKEN :
+{
+  < EXIT : "exit"|"EXIT" >//支持大小写创建表关键字
+| < QUIT : "quit"|"QUIT">
+| < CREATE_DATABASE: "create database"|"CREATE DATABASE" >
+| < SHOW_DATABASES : "show databases"|"SHOW DATABASES">
+| < DROP_DATABASE : "drop database"|"DROP DATABASE" >
+| < USE: "use"|"USE" >
+| < CREATE_TABLE : "create table"|"CREATE TABLE" >
+| < DROP_TABLE : "drop table"|"DROP TABLE">
+| < SHOW_TABLES : "show tables"|"SHOW TABLES">
+| < DESC : "desc"|"DESC">  //输出表的详细信息
+| < INSERT_INTO : "insert into"|"INSERT INTO">
+| < INT : "int"|"INT" >
+| < VACHAR : "vachar"|"VACHAR" >
+| < NONE : "none"|"NONE">  //引入这个标识符是为了标识某一个（一类）元素可以没有，（列级完整性约束,insert into)
+| < PRIMARY_KEY : "primary key"|"PRIMARY KEY" >
+| < UNIQUE : "unique"|"UNIQUE">
+| < NOT_NULL: "not null"|"NOT NULL">
+| < VALUES : "values"|"VALUES">
+| < DELETE_FROM : "delete_from"|"DELETE FROM">
+| < WHERE: "where"|"WHERE">
+| < SELECT: "select"|"SELECT">
+| < FROM: "from"|"FROM">
+| < UPDATE: "update"|"UPDATE">
+| < SET: "set"|"SET">
+}
+
+TOKEN :
+{
+  < OP_E : "=" >
+}
+
+TOKEN :
+{
+  < SEMICOLON : ";" >  //分号,这里不加#
+| < LEFT_PAREN : "(" > 
+| < RIGHT_PAREN : ")" >
+| < COMMA : "," >  // 逗号
+| < QUOTE : "'" >   //单引号
+| < ALL : "*">
+| < P_INT : ["1"-"9"](["0"-"9"])*> // 整数，*表示重复0次或无数次,标识正常的int数字和定义表的时候出现的"int"
+| < #ALPHABET : [ "a"-"z", "A"-"Z" ] > // 字母表 //当“#”存在时，该正则表达式被作为一个“私有正则表达式”被引用。
+| < #UNDERSCORE : "_" > //以 #开头的token只是在词法分析时使用，不能作为语法分析的输入，也就是说，它相对词法分析是局部的
+| < #DIGIT : [ "0"-"9" ] >
+// 这里是合法的表名，列名，insert字符串, 本来定义了另外一个String,但是貌似是因为和这个重复了，无法判别，报错来着。
+// 这里定义：字母开头，后接数字/字母/下划线
+//（没有考虑与关键字同名的情况）
+| < LEGAL_IDENTIFIER : < ALPHABET >(< ALPHABET > | < DIGIT >|< UNDERSCORE >)* >
+}
+
+/*
+返回值类型 规则名():
+{
+变量声明和一些初始化的动作
+}
+{
+}
+*/
+//语法级定义：SimpleDBMSParser.start();
+void start():
+{ }
+{
+  // 能识别的命令
+  commandList()
+| (< EXIT >| < QUIT >) { System.out.print("Bye~"); System.exit(0); } //输入EXIT/QUIT时，退出本程序}
+
+// 所有能识别的命令函数 
+void commandList():
+{
+}
+{
+   createDatabase()
+ | showDatabases()
+ | dropDatabase()
+ | useDatabase()
+ | createTable()
+ | droptable()
+ | showtables()
+ | desctable()
+ | insertrecord()
+ | deleterecord()
+ | selectrecord()
+ | updaterecord()
+}
+
+//创建数据库: create database dbname;
+void createDatabase() :
+{  
+    Token _databeseName; //需要数据库的名字作为create_database（）的参数
+}
+{
+    < CREATE_DATABASE >
+    _databeseName = < LEGAL_IDENTIFIER >
+    < SEMICOLON >
+    //如果能运行到这里，说明语法解析通过了，要开始创建了
+    {
+      database.create_database(_databeseName.toString());
+    }
+}
+
+//查看所有现有数据库: show databases;  
+void showDatabases() :
+{  
+}
+{
+    < SHOW_DATABASES >
+    < SEMICOLON >
+    //如果能运行到这里，说明语法解析通过了
+    {
+      database.show_databases();
+    }
+}
+
+// 删除一个已有数据库：drop database dbname;
+void dropDatabase() :
+{  
+    Token _databeseName; //需要数据库的名字作为drop_database（）的参数
+}
+{
+    < DROP_DATABASE >
+    _databeseName = < LEGAL_IDENTIFIER >
+    < SEMICOLON >
+    //如果能运行到这里，说明语法解析通过了
+    {
+      database.drop_database(_databeseName.toString());
+    }
+}
+
+// 使用并进入一个已有数据库: use dbname;
+void useDatabase() :
+{  
+    Token _databeseName; //需要数据库的名字作为use_database（）的参数
+}
+{
+    < USE >
+    _databeseName = < LEGAL_IDENTIFIER >
+    < SEMICOLON >
+    //如果能运行到这里，说明语法解析通过了
+    {
+      database.use_database(_databeseName.toString());
+    }
+}
+
+// 创建表
+// 表的属性和表的内容放在一个文件夹里面
+// 需要的属性：表名、列名(list)、列属性(list)、列完整性约束（list）
+void createTable() :
+{  
+    Token _tableName;
+    Token _cloName;
+    String tablename;
+    int temp1; //数据类型
+    String temp2;// 完整性约束
+    // 这里定义和
+    ArrayList<String> list_clo_name;
+    ArrayList<Integer> list_type;
+    ArrayList<String> list_clo_constraint;
+}
+{
+    < CREATE_TABLE >
+    _tableName = < LEGAL_IDENTIFIER >
+    { tablename = _tableName.toString();
+      list_clo_name = new ArrayList<String>(); 
+      list_type = new ArrayList<Integer>();
+      list_clo_constraint = new ArrayList<String>();
+    }
+    < LEFT_PAREN >
+    _cloName = < LEGAL_IDENTIFIER >
+    { list_clo_name.add(_cloName.toString());}
+    temp1 = dataType()
+    {list_type.add(temp1); }
+    temp2 = constraint()
+    {list_clo_constraint.add(temp2); }
+    (
+     < COMMA >
+     _cloName = < LEGAL_IDENTIFIER > //列名
+     { list_clo_name.add(_cloName.toString()); }
+     temp1 = dataType() 
+     { list_type.add(temp1); }
+     temp2 = constraint()
+     {list_clo_constraint.add(temp2); }
+    )* //可选项 >=0
+    < RIGHT_PAREN >
+    <SEMICOLON>
+    //如果能运行到这里，说明语法解析通过了
+    {
+      //检验输出
+//      for (String i : list_clo_name) {
+//            System.out.println(i);
+//        }
+//      for (Integer i : list_type) {
+//        System.out.println(i);
+//       }
+//      for (String i : list_clo_constraint) {
+//        System.out.println(i);
+//       }
+       table.create_table(tablename, list_clo_name, list_type, list_clo_constraint);
+    }
+}
+
+
+//数据类型
+int dataType() :
+{
+  Token temp;
+  int value ;
+}
+{         < INT > { value = 0;} { return value;} 
+         |
+         (           < VACHAR >
+           < LEFT_PAREN >
+           temp = < P_INT >
+           { value = Integer.parseInt( temp.image ) ;}
+           < RIGHT_PAREN >
+           { return value;}
+         )
+}
+
+//列级完整性约束
+String constraint() :
+{
+  Token temp;
+  String value;
+}
+{        
+         (           temp = < PRIMARY_KEY >
+         | temp = < NOT_NULL >
+         | temp = < UNIQUE >
+         | (< NONE >)* { value = "none"; return value;}//表示没有完整性约束条件
+         )
+         { value = temp.toString(); 
+           return value; }
+}
+
+//drop table 表名;　　//删除一个表
+void droptable() :
+{  
+    Token _tableName; 
+}
+{
+    < DROP_TABLE >
+    _tableName = < LEGAL_IDENTIFIER >
+    < SEMICOLON >
+    
+    //如果能运行到这里，说明语法解析通过了
+    {
+      table.drop_table(_tableName.toString());
+    }
+}
+
+//查看当前数据库中所有现有: show tables;  
+void showtables() :
+{  
+}
+{
+    < SHOW_TABLES >
+    < SEMICOLON >
+    //如果能运行到这里，说明语法解析通过了
+    {
+      table.show_tables();
+    }
+}
+
+
+// 输出一个表的详细信息：desc tablename;
+void desctable() :
+{  
+    Token _tableName; 
+}
+{
+    < DESC >
+    _tableName = < LEGAL_IDENTIFIER >
+    < SEMICOLON >
+    //如果能运行到这里，说明语法解析通过了
+    {
+      table.desc_table(_tableName.toString());
+    }
+}
+
+
+// 往表中插入数据
+/*
+支持
+INSERT INTO table_name
+VALUES (value1,value2,value3,...);
+
+INSERT INTO table_name (column1,column2,column3,...)
+VALUES (value1,value2,value3,...);
+*/
+void insertrecord() :
+{  
+    Token _tableName;
+    ArrayList<String> list_clo_name;
+    ArrayList<SupportedValue> list_clo_value;
+}
+{
+   { 
+     list_clo_name = new ArrayList<String>();
+     list_clo_value = new ArrayList<SupportedValue>();
+   }
+    < INSERT_INTO >
+    _tableName = < LEGAL_IDENTIFIER >
+ (
+    (      < LEFT_PAREN > 
+      list_clo_name = column_list()
+      < RIGHT_PAREN >
+    )  //这里部分也可以没有
+    | ( < NONE >)*
+  )
+    < VALUES >
+    < LEFT_PAREN > 
+    list_clo_value = value_list()
+    < RIGHT_PAREN >
+    < SEMICOLON >
+    
+    //如果能运行到这里，说明语法解析通过了
+    {
+//      if (list_clo_name.size()==0)
+      record.insert_record(_tableName.toString(), list_clo_name, list_clo_value);
+    }
+}
+
+//识别一系列列名
+ArrayList<String> column_list() :
+{
+   Token t;
+   ArrayList<String> name;
+}
+{
+  { name = new ArrayList<String>(); }
+   t = < LEGAL_IDENTIFIER > { name.add(t.toString());}
+   (
+     < COMMA >
+     t =  < LEGAL_IDENTIFIER > { name.add(t.toString());}   )*
+   { return name;}
+   
+}
+
+
+//本数据库系统支持插入的values
+ArrayList<SupportedValue> value_list() :
+{
+   Token t;
+   ArrayList<SupportedValue> value;
+}
+{   
+    { value = new ArrayList<SupportedValue>(); }
+
+  (      { value.add(supportedvalue()); }
+    (
+      < COMMA >
+      { value.add(supportedvalue()); }    )*
+  )
+    { return value; }
+  
+}
+
+//支持的识别的value值
+SupportedValue supportedvalue() :
+{  Token t;
+}
+{
+      t = < P_INT > { return(new SupportedValue(DataType.INT, t.toString())); } |
+    (
+      < QUOTE >
+      t = < LEGAL_IDENTIFIER >
+      < QUOTE>
+    ){ return(new SupportedValue(DataType.String, t.toString())); }
+}
+
+
+// 往表中删除数据
+/*
+支持
+DELETE FROM table_name
+WHERE column_name=value;
+
+DELETE FROM table_name;
+*/
+void deleterecord() :
+{  
+    Token temp;
+    String _tableName = "";
+    String _columnName = "";
+    String _op = "";
+    SupportedValue clo_value = new SupportedValue(DataType.INT, "");
+    
+}
+{
+  < DELETE_FROM>
+  temp = < LEGAL_IDENTIFIER >
+  { _tableName = temp.toString(); }
+  (
+    (
+      < WHERE > 
+      temp = < LEGAL_IDENTIFIER >
+      { _columnName = temp.toString(); }
+      temp = < OP_E >
+      { _op = temp.toString(); }
+      clo_value = supportedvalue()
+    )  //这里部分也可以没有
+    | ( < NONE >)*  )
+  < SEMICOLON >
+    //如果能运行到这里，说明语法解析通过了
+  {
+    record.delete_record(_tableName, _columnName, _op, clo_value);
+  }
+}
+
+// 查询表中的数据
+/*
+支持
+SELECT Sno,Sname FROM Student;
+SELECT * FROM Student;
+SELECT Sno,Sname FROM Student WHERE Sno='S21W001';
+SELECT * FROM Student WHERE Sage=18;
+*/
+void selectrecord() :
+{  
+    Token _tableName;
+    ArrayList<String> list_clo_name = new ArrayList<String>();
+    Token temp;
+    String _columnName = "";
+    String _op = "";
+    SupportedValue clo_value = new SupportedValue(DataType.INT,"");
+}
+{
+  < SELECT>
+ (
+    (
+      list_clo_name = column_list()
+    ) 
+    | < ALL >
+  )
+  < FROM >
+  _tableName = < LEGAL_IDENTIFIER >
+  (
+    (
+      < WHERE > 
+      temp = < LEGAL_IDENTIFIER >
+      { _columnName = temp.toString(); }
+      temp = < OP_E >
+      { _op = temp.toString(); }
+      clo_value = supportedvalue()
+    )  //这里部分也可以没有
+    | ( < NONE >)*
+  )
+  < SEMICOLON >
+    //如果能运行到这里，说明语法解析通过了
+  {
+    record.select_record(_tableName.toString(), list_clo_name, _columnName ,_op, clo_value);
+  }
+}
+
+
+// 更新表中的数据
+/*
+支持
+UPDATE Student SET Sage=18,Ssex='female' WHERE Sno='S21W001';
+(一定要有条件语句)
+*/
+void updaterecord() :
+{  
+    Token _tableName;
+    ArrayList<String> list_clo_name = new ArrayList<String>();
+    ArrayList<SupportedValue> list_clo_value  = new ArrayList<SupportedValue>();
+    Token temp;
+    String columnName = "";
+    String op = "";
+    SupportedValue clo_value = new SupportedValue(DataType.INT,"");
+}
+{
+  < UPDATE>
+  _tableName = < LEGAL_IDENTIFIER >
+  < SET >
+  temp = < LEGAL_IDENTIFIER > { list_clo_name.add(temp.toString());}
+  < OP_E >
+  { list_clo_value.add(supportedvalue()); }
+  (
+    < COMMA >
+    (
+		   temp = < LEGAL_IDENTIFIER > { list_clo_name.add(temp.toString());}
+		   < OP_E >
+		   { list_clo_value.add(supportedvalue()); }
+    )
+  )*  
+  (
+   (
+      < WHERE > 
+      temp = < LEGAL_IDENTIFIER >
+      { columnName = temp.toString(); }
+      temp = < OP_E >
+      { op = temp.toString(); }
+      clo_value = supportedvalue()
+   )  //这里部分也可以没有
+   | ( < NONE >)*
+  )
+  < SEMICOLON >
+    //如果能运行到这里，说明语法解析通过了
+  {
+    record.update_record(_tableName.toString(), list_clo_name, list_clo_value, columnName,op, clo_value);
+  }
+}
+
+
+
+
+
