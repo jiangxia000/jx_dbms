@@ -4,8 +4,8 @@
 - 引入jxl.jar包进行excel相关操作
 
 ps:
-1、运行前请安装好javacc编译插件（https://blog.csdn.net/qq_29232943/article/details/62439283） 
-2、修改./src/operate/SQLConstant.java中的 path = "E:\\eclipse_workingspace\\jx_dbms\\save"为自己本地文件夹绝对路径即可正常运行。
+1. 运行前请安装好javacc编译插件（https://blog.csdn.net/qq_29232943/article/details/62439283） 
+2. 修改./src/operate/SQLConstant.java中的 path = "E:\\eclipse_workingspace\\jx_dbms\\save"为自己本地文件夹绝对路径即可正常运行。
 
 ## 1.设计
 ### 数据库设计
